@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emoji Status Access</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: var(--tg-theme-bg-color, #fff);
+    color: var(--tg-theme-text-color, #000);
+    margin: 0; padding: 24px 18px; line-height: 1.45;
+  }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  p { margin: 8px 0; color: var(--tg-theme-hint-color, #666); }
+  button {
+    width: 100%; padding: 14px; margin-top: 14px; border: 0; border-radius: 12px;
+    font-size: 17px; font-weight: 600;
+    background: var(--tg-theme-button-color, #2481cc);
+    color: var(--tg-theme-button-text-color, #fff);
+  }
+  .box {
+    margin-top: 18px; padding: 14px; border-radius: 12px;
+    background: var(--tg-theme-secondary-bg-color, #f1f1f1);
+  }
+  .id { font-size: 22px; font-weight: 700; font-family: ui-monospace, monospace; }
+  #msg { margin-top: 16px; font-weight: 600; color: var(--tg-theme-text-color, #000); }
+</style>
+</head>
+<body>
+  <h1>Статус для режима сна 😴</h1>
+  <p>Нажми кнопку ниже и подтверди в окне Telegram, что бот может менять твой эмодзи‑статус. Нужно сделать один раз.</p>
+
+  <button id="allow">Разрешить менять статус</button>
+
+  <div class="box">
+    <p>Твой user_id (нужен для команды на iPhone):</p>
+    <div class="id" id="uid">—</div>
+    <button id="copy">Скопировать user_id</button>
+  </div>
+
+  <div id="msg"></div>
+
+<script>
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const msg = document.getElementById('msg');
+  const uidEl = document.getElementById('uid');
+
+  if (!tg || !tg.initData) {
+    msg.textContent = 'Открой эту страницу через своего бота в Telegram, а не в браузере.';
+  } else {
+    tg.ready();
+    tg.expand();
+    const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (user) uidEl.textContent = user.id;
+
+    if (!tg.isVersionAtLeast('8.0')) {
+      msg.textContent = 'Обнови Telegram — эта версия не умеет выдавать доступ к статусу.';
+    }
+  }
+
+  document.getElementById('allow').onclick = () => {
+    if (!tg || !tg.requestEmojiStatusAccess) {
+      msg.textContent = 'Функция недоступна. Открой страницу через бота и обнови Telegram.';
+      return;
+    }
+    tg.requestEmojiStatusAccess((allowed) => {
+      msg.textContent = allowed
+        ? '✅ Доступ выдан! Можно закрывать и настраивать «Команды».'
+        : '❌ Доступ не выдан. Нажми кнопку ещё раз и выбери «Разрешить».';
+    });
+  };
+
+  document.getElementById('copy').onclick = async () => {
+    const id = uidEl.textContent;
+    if (id === '—') return;
+    try {
+      await navigator.clipboard.writeText(id);
+      msg.textContent = 'user_id скопирован: ' + id;
+    } catch (e) {
+      msg.textContent = 'Не удалось скопировать, перепиши вручную: ' + id;
+    }
+  };
+</script>
+</body>
+</html>
